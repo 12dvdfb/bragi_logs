@@ -1,0 +1,198 @@
+first.pcapng
+25 - 122 - connection
+2262 - 2266 - set to green
+2266- 2270 - set to red 
+2270 - 2274 - white
+
+
+second.pcapng
+16 - BLU (120bff)
+20 - pink (f733ff)
+24 - 2nd DPI set to 1600
+72-76 - 2nd DPI set to 1500
+124 - 128 -1st DPI to 900
+176 180 - 1st DPI to 800
+228 232 - clicked default
+232-236 - clicked revert
+236-240- defsault (DPI)
+240 - 252 - new action
+256-272 - left hand
+272-288 - right hand
+292 - 366 - polling rate 125
+526 - 578 - polling rate 1000
+1504-1508 - brightness 100
+1508-1512 -  2nd DPI set to  0
+1512-1516 -  2nd DPI set to   33%
+1517 - 1520 -  2nd DPI set to  66?
+---
+
+three.pcapng
+21 - trash
+22 - 306 - connected, iCUE off
+307 - 402 - iCUE startup
+406 - 412 - iCUE shutdown
+
+---
+buttons.pcapng
+999-1000 scroll down
+1001-1002 scroll up
+
+7-10 right mouse button down
+11-14 right mouse button up
+
+15-18 left mouse button down
+19-22 left mouse button up
+
+1295-1296 r3 mouse button down
+1297-1298 r3 mouse button up
+
+1311-1312 r4 mouse button down
+1313-1314 r4 mouse button up
+
+1315-1316 l3 mouse button down
+1325-1326 l3 mouse button up
+
+1327-1328 l4 mouse button down
+1329-1330 l4 mouse button up
+
+1515-1524 dpi mouse button down
+-1572 something something DPI was happening?
+1573-1574 dpi mouse button up
+
+
+2263-2266 sniper 300dpi
+-2314 settled down
+
+1315-2318 sniper 200
+
+1369-2372 sniper (ff,ff,80)
+-2420 settled down
+
+2481-2484 disable 5th mode
+-2534
+
+2535-2538 enable 5th mode
+-2586
+
+2593-2596 disable 2nd mode
+-2644
+
+2645-2648 enable 2nd mode
+-2696
+
+---
+settings.pcapng
+34-232 connect
+329-332 logo opacity ~50%
+333-336 logo opacity 0%
+337-340 logo opacity 100%
+
+341-414 poling 125
+415-574 rebooted and discovered again
+575-590 left-handed mode
+591-606 right-handed
+607-610 brightness 0
+611-614 brightness 33
+617-618 brightness 66 // Not 615-?
+619-622 brightness 100
+
+707-718 new macro created
+723-734 macro assigned to left bottom (l4 on my paper copy)
+then a lot of failed experiments, including removing and creating yet another macro
+843-882 macro deleted
+
+---
+movement.pcapng
+17-28 left
+135-138 right
+139-140 left
+147-150 up
+155-164 down
+
+---
+dpifun.pcapng
+13-16 Changed DPI set to 2nd (see below)
+17-64 stopped updating
+1245-1248 white logo
+1249-125? (text is smeared here) pink logo (f7, 33, ff)
+4061-4123 plug out, iCUE still running
+---
+2nd DPI set:
+default colors, 2nd mode is default
+1st 5800dpi
+2nd 1500dpi default
+3rd 4600dpi
+4th 6000
+5th 9000
+sniper 400
+
+
+BP00 means that it uses version 0 of the Bragi protocol
+
+[14:08:36] <KitsuWhooa> Get wireshark, reverse engineer the protocol, and write functions to generate the packets just like you see in cue
+[14:09:10] <KitsuWhooa> and most likely change how the daemon works because the new protocol supports multiple devices on a single dongle
+
+---
+
+change color
+08 06 00 06 00 00 00 ff ff 00 00 00 00 00 (and 00 padding to 64)
+?? ?? ?? ?? ?? ?? ?? ?? RR 00 GG 00 BB 00 
+
+green
+08 06 00 06 00 00 00 ff 00 00 ff 00 00 00
+                     AA RR ?? GG ?? BB ??
+red
+08 06 00 06 00 00 00 ff ff 00 00 00 00 00
+                     AA RR ?? GG ?? BB ??
+BLUE - 120bff
+08 06 00 06 00 00 00 ff 12 00 0b 00 ff 00
+                     AA RR ?? GG ?? BB ??
+white
+08 06 00 06 00 00 00 ff ff 00 ff 00 ff 00
+                     AA RR ?? GG ?? BB ??
+
+DPI
+more than  1 packet????
+Yup, it goes sequentially, ity sends ALWAYS ALL 5 DPI modes
+weird packet, (defaul;t settings?), then 2 packets for each mode (DPI and color) and 2 weird packets at the end, total 1 + 2*5+2 = 13 packets
+This mouse has 5 DPI modes, but iCUE also defines "sniper" mode with yellow light and stiff, I haven't seen packets for that yet
+DPI is Litte indian, probably 2 bytes (could be 3), color ir BGR, 1 byte per color
+
+Change sends all of this shit
+
+
+08 01 20 00 20 03 - it's identical to 1st mode DPI for some reason, except for ID
+
+08 01 18 00 20 03 (1st mode)
+08 01 *             *from 18, increments by 1)
+
+08 01 2f 00 00 00 ff (RED)
+08 01 *     BB RR RR        from 2f, increments by 1
+
+08 01 19 00 40 06 (2nd mode dpi)
+08 01 30 00 ff ff ff (white)
+
+08 01 1a 00 b8 0b (3rd mode, 300dpi)
+08 01 31 00 00 ff 00 (GREEN)
+
+08 01 1b 00 70 17 (4th mode dpi)
+08 01 32 00 80 00 80 (ugly pink) 
+
+08 01 1c 00 28 23 (5th mode, 9000)
+08 01 33 00 ff bf 00(color, light blue)
+
+08 01 1f 00 1f 00 00 80 00 00 ??
+08 01 1e 00 00 00 00  ??
+
+
+1st packet
+08 01 ?? ?? ?? ??
+it's identical to 1st mode DPI for some reason, except for ID
+
+2nd-11th packet
+
+08 01 ** 00 DP DP - DPI, little endian
+08 01 ** 00 BB RR GG - color
+** is an ID of sorts, DPI starts from 18 and increments by 1; color starts from 2f
+
+
