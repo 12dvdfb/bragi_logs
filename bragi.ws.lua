@@ -148,6 +148,11 @@ local product_ids = {
     [0x0d] = "Get Last Status"
 }]]--
 
+local button_presses = {
+    [0] = "Not pressed",
+    [1] = "Pressed"
+}
+
 local f = bragi_proto.fields
 
 -- Target? I only can guess, it was always 0x08 or 0x00 for me
@@ -169,6 +174,16 @@ f.ident_vendor = ProtoField.uint16("bragi.ident.vendor", "USB Vendor ID", base.H
 f.ident_product = ProtoField.uint16("bragi.ident.product", "USB Product ID", base.HEX, product_ids)
 -- f.ident_pollrate = ProtoField.uint8("bragi.ident.pollrate", "Poll Rate (msec)", base.DEC)
 -- f.ident_devtype = ProtoField.uint8("bragi.ident.device_type", "Device Type", base.HEX, device_types)
+
+--Buttons
+f.button_left = ProtoField.uint8("bragi.mouse.buttons.left", "Left mouse button", base.HEX, button_presses, 0x01)
+f.button_right = ProtoField.uint8("bragi.mouse.buttons.right", "Right mouse button", base.HEX, button_presses, 0x02)
+f.button_scroll = ProtoField.uint8("bragi.mouse.buttons.scroll", "Scroll mouse button", base.HEX, button_presses, 0x04)
+f.button_left_side_bottom = ProtoField.uint8("bragi.mouse.buttons.left_side_bottom", "Left side bottom mouse button", base.HEX, button_presses, 0x08)
+f.button_left_side_top = ProtoField.uint8("bragi.mouse.buttons.left_side_top", "Left side top mouse button", base.HEX, button_presses, 0x10)
+f.button_right_side_bottom = ProtoField.uint8("bragi.mouse.buttons.right_side_bottom", "Right side bottom mouse button", base.HEX, button_presses, 0x20)
+f.button_right_side_top = ProtoField.uint8("bragi.mouse.buttons.right_side_top", "Right side top mouse button", base.HEX, button_presses, 0x40)
+f.button_dpi = ProtoField.uint8("bragi.mouse.buttons.dpi", "DPI mouse button", base.HEX, button_presses, 0x80)
 
 function has_index (tab, key)
     return tab[key] ~= nil
@@ -220,8 +235,24 @@ function bragi_proto.dissector(buffer, pinfo, tree)
             offset = offset + 1
             t_bragi:add(f.special_mode, mode)
         end
-    else
-        -- It is response to whatever then
+    elseif target == 0x00 then
+        if command == 0x02 then
+            -- It is response to whatever then
+            local buttons = buffer(offset, 1)
+            offset = offset + 1
+            t_bragi:add(f.button_left, buttons)
+            t_bragi:add(f.button_right, buttons)
+            t_bragi:add(f.button_scroll, buttons)
+            t_bragi:add(f.button_left_side_bottom, buttons)
+            t_bragi:add(f.button_left_side_top, buttons)
+            t_bragi:add(f.button_right_side_bottom, buttons)
+            t_bragi:add(f.button_right_side_top, buttons)
+            t_bragi:add(f.button_dpi, buttons)
+
+
+            local value = buffer(offset, buffer:len() - offset)
+            -- t_bragi:add(f.)
+        end
     end
 end
 
